@@ -1,0 +1,24 @@
+# Build outputs
+*.exe
+
+# Go test/build artifacts
+*.test
+coverage.out
+
+# Local secrets
+.env
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+
+# IDE / OS files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Local/generated files
+.cache/
+*~
