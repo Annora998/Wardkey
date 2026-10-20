@@ -1,99 +1,111 @@
 # Wardkey
 
-Wardkey is an experimental local credential broker for Git and the AWS CLI on Windows. It stores credentials in an encrypted vault, applies local policy to every request, and can require Windows Hello approval before releasing a credential.
+Wardkey is an experimental local credential broker for Git and the AWS CLI on Windows. It stores credentials in an encrypted vault, applies local policy to requests, and can require Windows Hello approval.
 
-> **Warning:** This is a research prototype. Use **dummy credentials only** for testing. It has not had an independent cryptographic or security review.
+Developer credentials are commonly accessed through tools such as Git and the AWS CLI. Wardkey explores whether credential release can be made dependent not only on the Windows user, but also on the application requesting the credential. The prototype evaluates the requesting process, credential provider/profile, and local policy before releasing a credential. Optional Windows Hello approval can add an explicit user confirmation step.
 
-## Overview
-
-Developer credentials are usually accessed through tools such as Git and the AWS CLI. Normally, any program running as your Windows user can ask for them.
-
-Wardkey explores whether credential release can depend not only on the Windows user, but also on **which application is asking**. Before releasing anything, the prototype evaluates the requesting process, the credential provider/profile, and local policy. Optional Windows Hello approval adds an explicit user confirmation step.
-
-**Without application-aware control**
-
-```
-User -> Credential helper -> Credential
-```
-
-**With Wardkey**
-
-```
-Application -> Wardkey -> Process identity -> Policy -> Allow / Deny / Approval -> Credential
-```
-
-## Features
-
-- Encrypted vault for credential entries.
-- Local broker and Git credential helper for Git credential requests.
-- AWS CLI support through `credential_process`.
-- Caller and profile policy, with per-request Windows Hello approval when configured.
-- Local, HMAC-chained audit log of every decision.
-- Decoy entries that are always denied and logged when requested.
+**Use dummy credentials for testing.**
 
 ## How it works
 
-Every request follows the same pipeline:
+```
+START
+  ↓
+Git credential helper / AWS credential_process
+  ↓
+Windows Named Pipe
+  ↓
+OS-derived peer PID
+  ↓
+Handler.Handle()
+  ↓
+Credential request validation
+  ↓
+Caller identity & process verification
+  │
+  ├── invalid → reject + audit
+  │
+  ↓
+Decoy check
+  │
+  ├── decoy → deny + audit
+  │
+  ↓
+Policy evaluation
+  │
+  ├── DENY → deny + audit
+  │
+  ├── APPROVAL REQUIRED
+  │     ↓
+  │   Request-bound Windows Hello approval
+  │     ↓
+  │   assertion verification
+  │     │
+  │     └── fail → deny + audit
+  │
+  └── ALLOW
+        ↓
+      Session.WithCredential()
+        ↓
+      Git / AWS executor
+        ↓
+      audit decision/result
+        ↓
+      Git / AWS credential response
+        ↓
+      END
+```
+
+## The idea
+
+Without application-aware control:
 
 ```
-Git credential helper / AWS credential_process
-        |
-        v
-Windows named pipe
-        |
-        v
-OS-derived peer PID
-        |
-        v
-Handler.Handle()
-        |
-        v
-Credential request validation
-        |
-        v
-Caller identity and process verification --- invalid ---> reject + audit
-        |
-        v
-Decoy check ------------------------------- decoy -----> deny + audit
-        |
-        v
-Policy evaluation ------------------------- DENY -------> deny + audit
-        |
-        +--- APPROVAL REQUIRED
-        |         |
-        |         v
-        |    Request-bound Windows Hello approval
-        |         |
-        |         v
-        |    Assertion verification --------- fail -----> deny + audit
-        |         |
-        +--- ALLOW (or approval passed)
-                  |
-                  v
-          Session.WithCredential()
-                  |
-                  v
-          Git / AWS executor
-                  |
-                  v
-          Audit decision and result
-                  |
-                  v
-          Git / AWS credential response
+User
+  ↓
+Credential helper
+  ↓
+Credential
 ```
+
+With Wardkey:
+
+```
+Application
+  ↓
+Wardkey
+  ↓
+Process identity
+  ↓
+Policy
+  ↓
+Allow / Deny / Approval
+  ↓
+Credential
+```
+
+Wardkey is an experimental implementation of this application-aware credential-release model for Git and AWS CLI.
+
+## What it does
+
+- Stores credential entries in an encrypted vault.
+- Serves Git credential requests through a local broker and Git credential helper.
+- Supplies AWS credentials through AWS CLI `credential_process`.
+- Applies caller and profile policy, with per-request Windows Hello approval when configured.
+- Records decisions in a local, HMAC-chained audit log.
+- Supports decoy entries that are denied and logged when requested.
 
 ## Technology
 
 | Area | Details |
 | --- | --- |
-| Language | Go |
-| OS integrations | Windows named pipes, Windows ACLs, process inspection, Windows WebAuthn / Windows Hello |
-| Vault encryption | Argon2id key derivation and XChaCha20-Poly1305 |
-| Argon2id parameters | Time cost 3, 64 MiB memory, parallelism 4 (as in the vault format code shared during development) |
-| Audit key | Dedicated key derived from the vault data key using HKDF-SHA256 |
-| Audit integrity | HMAC-chained records stored locally |
+| **Language** | Go. |
+| **Operating-system integrations** | Windows named pipes, Windows ACLs, process inspection, and Windows WebAuthn / Windows Hello. |
+| **Vault encryption** | Argon2id and XChaCha20-Poly1305. The vault format code shared during development uses Argon2id parameters of time cost 3, 64 MiB memory, and parallelism 4. |
+| **Audit key** | HKDF-SHA256 derives a dedicated audit key from the vault data key. |
+| **Audit integrity** | HMAC-chained records stored locally. |
 
-These are implementation details, not a claim of independent cryptographic review.
+These are implementation details, not a claim of independent cryptographic review. See [SECURITY.md](SECURITY.md) and [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for limitations.
 
 ## Getting started
 
@@ -105,13 +117,13 @@ These are implementation details, not a claim of independent cryptographic revie
 
 ### Build
 
-```powershell
+```
 go build -o wardkey.exe .\cmd\wardkey
 ```
 
 ### Test
 
-```bash
+```
 go test ./...
 ```
 
@@ -121,5 +133,5 @@ Automated tests cover the implemented security and request-handling components.
 
 Wardkey is experimental and has known limitations. Please read:
 
-- [SECURITY.md](SECURITY.md)
-- [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md)
+- [SECURITY.md](https://github.com/Annora998/Wardkey/blob/master/SECURITY.md)
+- [docs/THREAT_MODEL.md](https://github.com/Annora998/Wardkey/blob/master/docs/THREAT_MODEL.md)
