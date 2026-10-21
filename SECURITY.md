@@ -10,7 +10,7 @@ Use dummy credentials for testing.
 
 ## Security policy
 
-Do not use this scaffold to store or broker real credentials. No vault, trusted caller identity, authenticated approval, or credential provider is implemented. Report security issues privately to the maintainers once a public contact is established. Never include secrets in reports. Please do not include real credentials, passphrases, private keys, or other secrets in reports.
+Do not use this scaffold to store or broker real credentials. Report security issues privately to the maintainers once a public contact is established. Never include secrets in reports. Please do not include real credentials, passphrases, private keys, or other secrets in reports.
 
 ## Reporting a vulnerability
 
