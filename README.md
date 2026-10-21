@@ -107,6 +107,30 @@ Wardkey is an experimental implementation of this application-aware credential-r
 
 These are implementation details, not a claim of independent cryptographic review. See [SECURITY.md](SECURITY.md) and [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for limitations.
 
+## Commands
+
+Run `wardkey help` to see them all.
+
+| Command | What it does |
+|---|---|
+| `wardkey init` | Creates your encrypted vault and asks you to choose a passphrase. |
+| `wardkey add` | Adds a credential to the vault. |
+| `wardkey list` | Shows the names of stored credentials, not their secrets. |
+| `wardkey remove` | Deletes a credential from the vault. |
+| `wardkey migrate` | Upgrades an older vault file to the newest format. |
+| `wardkey serve` | Starts the background broker that answers Git and AWS requests. |
+| `wardkey status` | Shows whether the broker is running and unlocked. |
+| `wardkey lock` | Locks the broker so no credentials are released. |
+| `wardkey fingerprint` | Shows a program's fingerprint, which you use in policy rules. |
+| `wardkey doctor` | Checks your setup for problems. |
+| `wardkey audit verify` | Checks the activity log for tampering. |
+| `wardkey approval enroll` | Sets up Windows Hello approval. |
+| `wardkey version` | Shows the version. |
+
+### Development mode
+
+To try Wardkey in a test folder, set the environment variable `WARDKEY_DEV=1` and give a full folder path as the home location. Wardkey prints a warning because the folder may not have Windows file protection. Use dummy credentials only.
+
 ## Current limits
 
 - **AWS:** Wardkey works only with the official AWS command-line tool (`aws.exe`). Other tools, such as Terraform or programming libraries, are not supported yet.
