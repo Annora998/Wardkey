@@ -68,6 +68,13 @@ Development mode is for dummy test credentials only. Its warning states that the
 
 Matching hashes show that the two local executable files were identical when hashed. This does not verify the source, build environment, dependencies, publisher identity, or distribution channel. Wardkey does not yet provide a complete signed release and update-verification process.
 
+## Current limits
+
+- **AWS:** Wardkey works only with the official AWS command-line tool (`aws.exe`). Other tools, such as Terraform or programming libraries, are not supported yet.
+- **AWS prompts:** Wardkey does not remember AWS credentials between calls. If a rule asks for Windows Hello every time, you may be asked often.
+- **Windows only.** There is no Mac or Linux version.
+- **Not independently audited.** Do not use this to protect anything you cannot afford to lose.
+  
 ## Production-readiness work
 
 Before production use, Wardkey needs independent security review, a verifiable signed release and update process, documented recovery and incident response, and review of migration, backup, permissions, and rollback behavior.
